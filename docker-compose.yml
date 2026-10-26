@@ -1,0 +1,49 @@
+
+services:
+  bitcoind:
+    image: ruimarinho/bitcoin-core:latest # Puoi usare 'latest' se preferisci, ma ti consiglio la 27.0 visto che l'hai installata su WSL[cite: 10]
+    container_name: bitcoind-regtest
+    command:
+      - -regtest=1
+      - -rpcuser=Rari
+      - -rpcpassword=Bellartu.2904
+      - -rpcallowip=0.0.0.0/0
+      - -rpcbind=0.0.0.0
+      - -server=1
+      - -txindex=1
+    ports:
+      - "18443:18443"
+    volumes:
+      - bitcoind_data:/home/bitcoin/.bitcoin
+
+  backend:
+    build:
+      context: ./Server_Flask
+    container_name: flask-backend
+    environment:
+      - BITCOIN_RPC_HOST=bitcoind
+    ports:
+      - "5000:5000"
+    depends_on:
+      - bitcoind
+    volumes:
+      - ./Server_Flask:/app
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: react-frontend
+    ports:
+      - "5173:5173"
+      - "3000:3000"
+    environment:
+      - BACKEND_URL=http://backend:5000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  bitcoind_data:
+  
